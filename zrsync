@@ -48,7 +48,7 @@ while getopts ":h:l:r:e:p" Option; do
 		echo '	-l path			   local path to sync'
 		echo '	-r path			   remote path to sync to'
 		echo '	-e file			   exlcude file'
-		echo '	-p				   pretend'
+		echo '	-p                         pretend'
 		echo
 		exit 1 ;;
 	esac
