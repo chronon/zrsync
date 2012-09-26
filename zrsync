@@ -1,0 +1,105 @@
+#!/bin/bash
+
+#*********************************************************************#
+# zrsync
+# a bash shell script wrapper for rsync
+# by Gregory Gaskill <one@chronon.com> 12 January 2005
+#*********************************************************************#
+
+# default host if not specified on the command line
+host=$ZRSYNC_REMOTE
+
+# default local path, -P uses physical path (resolved symlinks)
+# localpath=`pwd -P`/
+localpath=`pwd`/
+
+# replace OS X 'Users' directory with 'home'
+if [ $ZRSYNC_OSXUSER -eq 1 ]; then
+	remotepath=${localpath/Users/\home}
+else
+	remotepath=$localpath
+fi
+
+# default name of exclude file
+exclude='sync.exclude'
+
+# default action (yes:1 or no:0)
+pretend=0
+
+# command line args for rsync
+rsyncargs='-auv -e ssh --delete-after --stats --exclude=.svn --exclude=.git*'
+
+#
+# end config**********************************************************#
+#
+
+# get the options...
+while getopts ":h:l:r:e:p" Option; do
+	case $Option in
+	h)	host=$OPTARG;;
+	l)	localpath=$OPTARG;;
+	r)	remotepath=$OPTARG;;
+	p)	pretend=1;;
+	e)	exclude=$OPTARG;;
+	*)	echo
+		echo "Usage: `basename $0` options (-hlrpe)"
+		echo
+		echo '	-h hostname		   remote host to connect to'
+		echo '	-l path			   local path to sync'
+		echo '	-r path			   remote path to sync to'
+		echo '	-e file			   exlcude file'
+		echo '	-p				   pretend'
+		echo
+		exit 1 ;;
+	esac
+done
+
+# Move argument pointer to next.	
+shift $(($OPTIND - 1))
+
+# if $host was not set on command and line not set as env variable, abort.
+if [ -z $host ]; then
+	echo "Remote host not set, aborting."
+	exit 1
+fi
+
+# check for trailing / in remotepath and remove
+remotepath=$(echo $remotepath | sed 's/\/*$//') 
+
+# check for the exclude file
+if [[ -e $exclude ]]; then
+	rsyncargs="$rsyncargs --exclude-from=$exclude"
+fi
+
+# pretend or for real?
+if [ $pretend -eq 1 ]; then
+	# set some colors
+	blue="[34;01m"
+	cyan="[36;01m"
+	green="[32;01m"
+	off="[0m"
+	red="[31;01m"
+	yellow="[33;01m"
+
+	# output the pretend stuff
+	echo
+	echo ${red}Variables:
+	echo ----------$off
+	echo ${cyan}rsync opts:${off}  ${rsyncargs}
+	if [[ -e $exclude ]]; then
+		echo ${cyan}exclude:${off}	   ${exclude}
+	fi
+	echo ${cyan}source:${off}	   ${localpath}
+	echo ${cyan}destination:${off} ${remotepath}
+	echo ${cyan}host:${off}		   ${host}
+	echo
+	echo ${red}Full command:
+	echo -------------$off
+	echo "rsync $rsyncargs $localpath $host:$remotepath"
+	echo
+else
+	# do it
+	rsync ${rsyncargs} ${localpath} ${host}:${remotepath}
+fi
+
+exit 0
