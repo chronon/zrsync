@@ -27,7 +27,7 @@ exclude='sync.exclude'
 pretend=0
 
 # command line args for rsync
-rsyncargs='-auv -e ssh --delete-after --stats --exclude=.svn --exclude=.git*'
+rsyncargs='-auv -e ssh --delete-after --stats --exclude=.svn --exclude=.git* --exclude=.sass-cache'
 
 #
 # end config**********************************************************#
